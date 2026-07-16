@@ -20,3 +20,15 @@ test("incorpora as regras oficiais do Edital 03 de 2026", async () => {
   assert.match(s, /date:"2026-08-30"/); assert.match(s, /totalQuestions:50/); assert.match(s, /minimumScore:70/); assert.match(s, /Conhecimentos Específicos de Informática",20,3/);
   assert.match(s, /prova de 2023 citou Puga/); assert.match(s, /3 foram anuladas/);
 });
+
+test("calcula evolução e carga adaptativa com dados reais", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const logic = await readFile(new URL("../app/logic.ts", import.meta.url), "utf8");
+  assert.match(app, /weeklyEvolution\(p\.attemptHistory\)/);
+  assert.match(app, /adaptiveLoad\(p\.attemptHistory/);
+  assert.match(app, /Calculado somente com suas respostas/);
+  assert.doesNotMatch(app, /\[8,12,6,15,10,18,9\]/);
+  assert.doesNotMatch(app, /\[\["Programação",76\]/);
+  assert.match(logic, /daysRemaining <= 14 \? 1\.4/);
+  assert.match(logic, /75 - accuracy/);
+});
