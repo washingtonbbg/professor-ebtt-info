@@ -55,3 +55,15 @@ test("sincroniza progresso e questões geradas no D1", async () => {
   assert.match(route, /oai-authenticated-user-email/);
   assert.match(route, /ON CONFLICT\(user_id\) DO UPDATE/);
 });
+
+test("revisa e persiste correções de questões pela API", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const route = await readFile(new URL("../app/api/questions/review/route.ts", import.meta.url), "utf8");
+  const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
+  assert.match(app, /Revisar com IA/);
+  assert.match(app, /\/api\/questions\/review/);
+  assert.match(route, /exatamente uma alternativa correta/);
+  assert.match(route, /question_review/);
+  assert.match(storage, /mergeQuestions/);
+  assert.match(storage, /revisada por IA/);
+});

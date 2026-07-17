@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-type D1Result<T> = { results?: T[] };
 type D1Statement = { bind(...values: unknown[]): D1Statement; first<T>(): Promise<T|null>; run(): Promise<unknown> };
 type D1Database = { prepare(query: string): D1Statement };
 
