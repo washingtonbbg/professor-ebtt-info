@@ -42,3 +42,14 @@ test("não repete acertos e registra estudo ao responder", async () => {
   assert.match(app, /Zerar todas as estatísticas/);
   assert.match(route, /return pool\.slice\(0, 2\)/);
 });
+
+test("sincroniza progresso e questões geradas no D1", async () => {
+  const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
+  const route = await readFile(new URL("../app/api/progress/route.ts", import.meta.url), "utf8");
+  const hosting = JSON.parse(await readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"));
+  assert.equal(hosting.d1, "DB");
+  assert.match(storage, /fetch\("\/api\/progress"/);
+  assert.match(storage, /syncFromDatabase/);
+  assert.match(route, /oai-authenticated-user-email/);
+  assert.match(route, /ON CONFLICT\(user_id\) DO UPDATE/);
+});
