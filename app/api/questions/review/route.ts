@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
   const prompt = `Revise tecnicamente esta questão de concurso EBTT. Recalcule códigos, fórmulas e afirmações passo a passo. ` +
     `Confirme que existe exatamente uma alternativa correta, que answer aponta para ela e que explanation e wrong são coerentes. ` +
     `Corrija apenas o necessário, preserve tema, dificuldade, cinco alternativas e idioma português. Não confie no gabarito recebido. ` +
+    `No prompt revisado, todo código ou pseudocódigo deve ficar em bloco Markdown com três crases, uma instrução por linha, linhas em branco entre blocos lógicos e indentação de quatro espaços por nível. ` +
     `sourceNote deve informar que a questão foi revisada por IA e exige validação humana em temas jurídicos ou normativos.\n${JSON.stringify(question)}`;
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {

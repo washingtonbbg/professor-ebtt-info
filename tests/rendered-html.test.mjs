@@ -67,3 +67,14 @@ test("revisa e persiste correções de questões pela API", async () => {
   assert.match(storage, /mergeQuestions/);
   assert.match(storage, /revisada por IA/);
 });
+
+test("renderiza código de questões em bloco organizado", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
+  const generation = await readFile(new URL("../app/api/questions/route.ts", import.meta.url), "utf8");
+  assert.match(app, /function QuestionPrompt/);
+  assert.match(app, /<pre key=\{i\}>/);
+  assert.match(css, /white-space: pre/);
+  assert.match(css, /Consolas/);
+  assert.match(generation, /nunca compacte código em uma linha/);
+});

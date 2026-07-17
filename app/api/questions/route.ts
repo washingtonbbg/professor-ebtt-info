@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
   const prompt = `Crie 2 questões inéditas para o concurso de Professor EBTT Informática do IFMT. Preferência: ${topic}. ` +
     `Escopo: ${allowed}. ` +
     `Use o estilo pedagógico da prova de 2023 (afirmações I/II/III, código ou conceitos), sem copiar. Varie dados e cenário. ` +
+    `Sempre formate código ou pseudocódigo dentro de um bloco Markdown com três crases, linhas separadas e indentação de quatro espaços por nível; nunca compacte código em uma linha. ` +
     `Cada explicação deve ter 3 frases objetivas: conceito, resolução e armadilha. Cada item de wrong deve explicar o erro em uma frase curta. ` +
     `sourceNote deve informar que a questão é autoral e inspirada no estilo da prova anterior.`;
   try {
