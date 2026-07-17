@@ -50,6 +50,8 @@ test("sincroniza progresso e questões geradas no D1", async () => {
   assert.equal(hosting.d1, "DB");
   assert.match(storage, /fetch\("\/api\/progress"/);
   assert.match(storage, /syncFromDatabase/);
+  assert.match(storage, /function merge\(remote:Progress,device:Progress\)/);
+  assert.match(storage, /attemptHistory=union/);
   assert.match(route, /oai-authenticated-user-email/);
   assert.match(route, /ON CONFLICT\(user_id\) DO UPDATE/);
 });
