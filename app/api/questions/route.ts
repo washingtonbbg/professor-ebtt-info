@@ -30,7 +30,7 @@ const schema = {
 function fallback(topic: string, seen: number[]): Question[] {
   const candidates = questions.filter((q) => !seen.includes(q.id) && (topic === "Todas" || q.topic.includes(topic) || q.area === topic));
   const pool = candidates.length ? candidates : questions.filter((q) => !seen.includes(q.id));
-  return (pool.length ? pool : questions).slice(0, 2).map((q, i) => ({ ...q, id: Date.now() + i, sourceNote: q.sourceNote ?? "Questão autoral no estilo da prova anterior, com valores e contexto adaptados." }));
+  return pool.slice(0, 2).map((q, i) => ({ ...q, id: Date.now() + i, sourceNote: q.sourceNote ?? "Questão autoral no estilo da prova anterior, com valores e contexto adaptados." }));
 }
 
 export async function POST(request: NextRequest) {

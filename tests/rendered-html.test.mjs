@@ -32,3 +32,13 @@ test("calcula evolução e carga adaptativa com dados reais", async () => {
   assert.match(logic, /daysRemaining <= 14 \? 1\.4/);
   assert.match(logic, /75 - accuracy/);
 });
+
+test("não repete acertos e registra estudo ao responder", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const route = await readFile(new URL("../app/api/questions/route.ts", import.meta.url), "utf8");
+  assert.match(app, /successfulIds\.has\(q\.id\)/);
+  assert.match(app, /some\(a=>a\.questionId===q\.id&&a\.isCorrect\)/);
+  assert.match(app, /studyHistory:\[\.\.\.v\.studyHistory/);
+  assert.match(app, /Zerar todas as estatísticas/);
+  assert.match(route, /return pool\.slice\(0, 2\)/);
+});
