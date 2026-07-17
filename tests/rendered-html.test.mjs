@@ -78,3 +78,13 @@ test("renderiza código de questões em bloco organizado", async () => {
   assert.match(css, /Consolas/);
   assert.match(generation, /nunca compacte código em uma linha/);
 });
+
+test("abre explicação na IA escolhida sem consumir a API do projeto", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
+  for (const provider of ["ChatGPT", "Gemini", "Claude", "Copilot", "Perplexity"]) assert.match(app, new RegExp(provider));
+  assert.match(app, /navigator\.clipboard\.writeText\(prompt\)/);
+  assert.match(app, /window\.open\(provider\.url/);
+  assert.match(app, /Nenhum token da API do projeto será usado/);
+  assert.match(css, /ai-provider-menu/);
+});
