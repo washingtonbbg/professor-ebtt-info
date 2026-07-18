@@ -127,7 +127,17 @@ test("organiza a correção da questão em etapas didáticas", async () => {
 
 test("fecha o painel de IA antes de avançar para a próxima questão", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
-  assert.match(app, /const next=async\(\)=>\{const wasCorrect=chosen===q\.answer;setAiOpen\(false\);/);
+  assert.match(app, /const next=async\(\)=>\{setAiOpen\(false\);/);
+});
+
+test("reapresenta no dia seguinte as questões erradas", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const logic = await readFile(new URL("../app/logic.ts", import.meta.url), "utf8");
+  assert.match(app, /dueReviewIds=new Set/);
+  assert.match(app, /new Date\(e\.nextReview\)<=new Date\(\)/);
+  assert.match(app, /!attemptedIds\.has\(q\.id\)\|\|dueReviewIds\.has\(q\.id\)/);
+  assert.match(app, /resolved:true/);
+  assert.match(logic, /rating === "Errei"\)date\.setHours\(0,0,0,0\)/);
 });
 
 test("formata seções longas do revisor e evita resposta cortada", async () => {

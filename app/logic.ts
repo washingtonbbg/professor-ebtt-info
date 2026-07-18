@@ -6,7 +6,7 @@ export function priority(weight: number, frequency: number, errorRate: number, o
 }
 export function nextReview(rating: "Errei" | "Difícil" | "Bom" | "Fácil", now = new Date()) {
   const days = rating === "Errei" ? 1 : rating === "Difícil" ? 7 : rating === "Bom" ? 14 : 30;
-  const date = new Date(now); date.setDate(date.getDate() + days); return date.toISOString();
+  const date = new Date(now); date.setDate(date.getDate() + days); if(rating === "Errei")date.setHours(0,0,0,0); return date.toISOString();
 }
 export function createSchedule(names: string[], weekdays: number[], hours: number, start = new Date(), end?: Date) {
   const fallback = new Date(start); fallback.setDate(fallback.getDate() + 90); const limit = end && end > start ? end : fallback;
