@@ -124,3 +124,8 @@ test("organiza a correção da questão em etapas didáticas", async () => {
   assert.match(generation, /exatamente 3 frases/);
   assert.match(review, /exatamente 3 frases/);
 });
+
+test("fecha o painel de IA antes de avançar para a próxima questão", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  assert.match(app, /const next=async\(\)=>\{const wasCorrect=chosen===q\.answer;setAiOpen\(false\);/);
+});
