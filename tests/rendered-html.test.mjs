@@ -100,3 +100,14 @@ test("persiste o histórico do assistente junto ao progresso", async () => {
   assert.match(storage, /chatKeys=new Set/);
   assert.match(storage, /slice\(-40\)/);
 });
+
+test("formata Markdown e converte fórmulas do chat em texto legível", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
+  const route = await readFile(new URL("../app/api/questions/chat/route.ts", import.meta.url), "utf8");
+  assert.match(app, /function MarkdownText/);
+  assert.match(app, /function readableMath/);
+  assert.match(app, /part\.startsWith\("\*\*"\)/);
+  assert.match(css, /\.ai-markdown pre/);
+  assert.match(route, /Nunca use delimitadores LaTeX/);
+});
