@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     `Escopo: ${allowed}. ` +
     `Use o estilo pedagógico da prova de 2023 (afirmações I/II/III, código ou conceitos), sem copiar. Varie dados e cenário. ` +
     `Sempre formate código ou pseudocódigo dentro de um bloco Markdown com três crases, linhas separadas e indentação de quatro espaços por nível; nunca compacte código em uma linha. ` +
-    `Cada explicação deve ter 3 frases objetivas: conceito, resolução e armadilha. Cada item de wrong deve explicar o erro em uma frase curta. ` +
+    `Cada explanation deve ter exatamente 3 frases objetivas, nesta ordem e com estes prefixos: "Conceito:", "Resolução:" e "Armadilha:". Cada item de wrong deve explicar o erro específico daquela alternativa em uma frase curta e didática. ` +
     `sourceNote deve informar que a questão é autoral e inspirada no estilo da prova anterior.`;
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {

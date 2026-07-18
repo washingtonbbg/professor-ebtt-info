@@ -111,3 +111,16 @@ test("formata Markdown e converte fórmulas do chat em texto legível", async ()
   assert.match(css, /\.ai-markdown pre/);
   assert.match(route, /Nunca use delimitadores LaTeX/);
 });
+
+test("organiza a correção da questão em etapas didáticas", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
+  const generation = await readFile(new URL("../app/api/questions/route.ts", import.meta.url), "utf8");
+  const review = await readFile(new URL("../app/api/questions/review/route.ts", import.meta.url), "utf8");
+  assert.match(app, /function QuestionFeedback/);
+  for (const label of ["ALTERNATIVA CORRETA", "Conceito-chave", "Como resolver", "Armadilha da questão", "Analisar todas as alternativas"]) assert.match(app, new RegExp(label));
+  assert.match(css, /\.explanation-steps/);
+  assert.match(css, /\.alternative-review/);
+  assert.match(generation, /exatamente 3 frases/);
+  assert.match(review, /exatamente 3 frases/);
+});
