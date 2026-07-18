@@ -79,12 +79,24 @@ test("renderiza código de questões em bloco organizado", async () => {
   assert.match(generation, /nunca compacte código em uma linha/);
 });
 
-test("abre explicação na IA escolhida sem consumir a API do projeto", async () => {
+test("abre painel lateral integrado com consentimento e troca de assistente", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
   const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
-  for (const provider of ["ChatGPT", "Gemini", "Claude", "Copilot", "Perplexity"]) assert.match(app, new RegExp(provider));
-  assert.match(app, /navigator\.clipboard\.writeText\(prompt\)/);
-  assert.match(app, /window\.open\(provider\.url/);
-  assert.match(app, /Nenhum token da API do projeto será usado/);
-  assert.match(css, /ai-provider-menu/);
+  const route = await readFile(new URL("../app/api/questions/chat/route.ts", import.meta.url), "utf8");
+  for (const assistant of ["Professor didático", "Tutor socrático", "Revisor técnico"]) assert.match(app, new RegExp(assistant));
+  assert.match(app, /Autorizar contexto desta questão/);
+  assert.match(app, /question-with-ai open/);
+  assert.match(app, /\/api\/questions\/chat/);
+  assert.match(css, /ai-side-panel/);
+  assert.match(css, /position: sticky/);
+  assert.match(route, /shareContext/);
+  assert.match(route, /O estudante não autorizou/);
+  assert.match(route, /gpt-5\.6-terra/);
+});
+
+test("persiste o histórico do assistente junto ao progresso", async () => {
+  const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
+  assert.match(storage, /aiChats:Record<string,AIMessage\[\]>/);
+  assert.match(storage, /chatKeys=new Set/);
+  assert.match(storage, /slice\(-40\)/);
 });
