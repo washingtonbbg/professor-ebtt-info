@@ -17,6 +17,7 @@ export function createSchedule(names: string[], weekdays: number[], hours: numbe
 
 export type AttemptRecord = { topic: string; isCorrect: boolean; answeredAt: string };
 export type StudyRecord = { id: string; date: string; minutes: number };
+export const EXAM_MINUTES_PER_QUESTION = 240 / 50;
 const dateKey = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
 
 export function weeklyEvolution(attempts: AttemptRecord[], now = new Date()) {
@@ -36,8 +37,9 @@ export function adaptiveLoad(attempts: AttemptRecord[], baseMinutes: number, exa
   const urgency = daysRemaining <= 14 ? 1.4 : daysRemaining <= 30 ? 1.2 : 1;
   const performanceBoost = accuracy === null ? 0.1 : Math.max(0, (75 - accuracy) / 100);
   const recommendedMinutes = Math.min(360, Math.ceil(baseMinutes * (urgency + performanceBoost) / 15) * 15);
-  const questionTarget = Math.min(80, Math.max(15, Math.ceil(recommendedMinutes * .35 / 2 * (1 + performanceBoost))));
-  return { accuracy, daysRemaining, recommendedMinutes, questionTarget, recentQuestions: recent.length };
+  const questionBlockMinutes = Math.round(recommendedMinutes * .4);
+  const questionTarget = Math.min(50, Math.max(5, Math.floor(questionBlockMinutes / EXAM_MINUTES_PER_QUESTION)));
+  return { accuracy, daysRemaining, recommendedMinutes, questionTarget, questionBlockMinutes, minutesPerQuestion: EXAM_MINUTES_PER_QUESTION, recentQuestions: recent.length };
 }
 
 export function todayStudyMinutes(records: StudyRecord[], now = new Date()) {

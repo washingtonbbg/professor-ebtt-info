@@ -142,3 +142,17 @@ test("formata seções longas do revisor e evita resposta cortada", async () => 
   assert.match(route, /max_output_tokens:1500/);
   assert.match(route, /conclusão completa/);
 });
+
+test("gera e persiste uma meta adaptativa diária no ritmo oficial da prova", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const logic = await readFile(new URL("../app/logic.ts", import.meta.url), "utf8");
+  const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
+  const route = await readFile(new URL("../app/api/plan/daily/route.ts", import.meta.url), "utf8");
+  assert.match(logic, /EXAM_MINUTES_PER_QUESTION = 240 \/ 50/);
+  assert.match(app, /\/api\/plan\/daily/);
+  assert.match(app, /4 min 48 s por questão/);
+  assert.match(storage, /dailyPlans:Record<string,DailyPlan>/);
+  assert.match(storage, /dailyPlans:\{\.\.\.remote\.dailyPlans,\.\.\.device\.dailyPlans\}/);
+  assert.match(route, /gpt-5\.6-terra/);
+  assert.match(route, /questionBlockMinutes/);
+});
