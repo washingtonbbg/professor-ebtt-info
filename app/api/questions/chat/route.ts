@@ -7,7 +7,7 @@ type ChatMessage = { role: "user"|"assistant"; content: string };
 const assistants:Record<string,string> = {
   professor:"Explique didaticamente, passo a passo, com exemplos curtos e uma regra final para revisão.",
   socratico:"Atue como tutor socrático: faça perguntas orientadoras e dê pistas antes de revelar a conclusão.",
-  revisor:"Seja objetivo e técnico: confira conceitos, cálculos, gabarito e armadilhas de cada alternativa.",
+  revisor:"Seja objetivo e técnico: confira conceitos, cálculos, gabarito e armadilhas. Evite repetir o enunciado e os mesmos cálculos. Organize a resposta em no máximo 6 seções curtas e conclua sempre.",
 };
 
 export async function POST(request:NextRequest) {
@@ -21,9 +21,9 @@ export async function POST(request:NextRequest) {
   const q=body?.shareContext?body.question:undefined;
   const selected=Number.isInteger(body?.selectedAnswer)?String.fromCharCode(65+(body?.selectedAnswer as number)):"não marcada";
   const context=q?`\n\nCONTEXTO AUTORIZADO DA QUESTÃO:\n${q.prompt}\n${q.options.map((o,i)=>`${String.fromCharCode(65+i)}) ${o}`).join("\n")}\nResposta do estudante: ${selected}.\nGabarito informado: ${String.fromCharCode(65+q.answer)}.\nExplicação do aplicativo: ${q.explanation}`:"\n\nO estudante não autorizou o compartilhamento da questão. Responda somente ao que ele escrever e avise quando faltar contexto.";
-  const instructions=`Você é um assistente de estudos para concurso de Professor EBTT em Informática. Responda em português brasileiro. ${assistants[assistant]} Não invente fatos nem finja ter visto conteúdo não compartilhado. Preserve o foco da conversa e use respostas proporcionais à dúvida. Formate com Markdown simples: títulos curtos, negrito, listas e blocos de código. Nunca use delimitadores LaTeX como \\[...\\], \\(...\\) ou comandos como \\frac; escreva cálculos de forma legível com símbolos Unicode e texto simples.${context}`;
+  const instructions=`Você é um assistente de estudos para concurso de Professor EBTT em Informática. Responda em português brasileiro. ${assistants[assistant]} Não invente fatos nem finja ter visto conteúdo não compartilhado. Preserve o foco da conversa e use respostas proporcionais à dúvida. Formate com Markdown simples: títulos curtos, negrito, listas e blocos de código. Use separadores somente entre seções realmente distintas. Nunca use delimitadores LaTeX como \\[...\\], \\(...\\) ou comandos como \\frac; escreva cálculos de forma legível com símbolos Unicode e texto simples. Limite a resposta a cerca de 700 palavras, elimine repetições e reserve espaço para uma conclusão completa.${context}`;
   try {
-    const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-5.6-terra",reasoning:{effort:"low"},instructions,input:messages,max_output_tokens:900,text:{verbosity:"medium"}})});
+    const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-5.6-terra",reasoning:{effort:"low"},instructions,input:messages,max_output_tokens:1500,text:{verbosity:"medium"}})});
     if(!response.ok){const failure=await response.json().catch(()=>({})) as {error?:{code?:string;type?:string}};return NextResponse.json({error:failure.error?.code??failure.error?.type??"chat_failed"},{status:response.status})}
     const result=await response.json() as {output?:{content?:{type?:string;text?:string}[]}[]};
     const answer=result.output?.flatMap(item=>item.content??[]).find(content=>content.type==="output_text")?.text;

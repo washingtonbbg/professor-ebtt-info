@@ -129,3 +129,16 @@ test("fecha o painel de IA antes de avançar para a próxima questão", async ()
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
   assert.match(app, /const next=async\(\)=>\{const wasCorrect=chosen===q\.answer;setAiOpen\(false\);/);
 });
+
+test("formata seções longas do revisor e evita resposta cortada", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
+  const route = await readFile(new URL("../app/api/questions/chat/route.ts", import.meta.url), "utf8");
+  assert.match(app, /return <hr key=\{key\}/);
+  assert.match(app, /<h3 key=\{key\}>/);
+  assert.match(css, /\.ai-markdown h3/);
+  assert.match(css, /\.ai-markdown hr/);
+  assert.match(route, /no máximo 6 seções curtas/);
+  assert.match(route, /max_output_tokens:1500/);
+  assert.match(route, /conclusão completa/);
+});
