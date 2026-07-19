@@ -166,3 +166,14 @@ test("gera e persiste uma meta adaptativa diária no ritmo oficial da prova", as
   assert.match(route, /gpt-5\.6-terra/);
   assert.match(route, /questionBlockMinutes/);
 });
+
+test("substitui flashcards por revisão livre das questões já feitas", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
+  assert.match(app, /"Questões feitas"/);
+  assert.match(app, /function QuestionReviews/);
+  assert.match(app, /Responder novamente/);
+  assert.doesNotMatch(app, /function Cards/);
+  assert.match(storage, /questionReviews:QuestionReview\[\]/);
+  assert.match(storage, /questionReviews=union/);
+});

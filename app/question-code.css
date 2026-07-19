@@ -116,3 +116,6 @@
   .correct-answer { align-items: flex-start; }
   .ai-side-panel { bottom: 66px; height: calc(100vh - 66px); }
 }
+
+.review-questions { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .review-questions { grid-template-columns: 1fr; } }
