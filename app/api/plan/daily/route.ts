@@ -11,7 +11,7 @@ function finish(date:string,recommendedMinutes:number,focusTopics:string[],ratio
   const minutes=clamp(Math.round(recommendedMinutes/15)*15,30,360);
   const questionBlockMinutes=Math.round(minutes*.4);
   const questionTarget=clamp(Math.floor(questionBlockMinutes/MINUTES_PER_QUESTION),5,50);
-  return {date,recommendedMinutes:minutes,questionTarget,minutesPerQuestion:MINUTES_PER_QUESTION,questionBlockMinutes,focusTopics:focusTopics.slice(0,3),rationale:rationale.slice(0,320),generatedByAi};
+  return {date,generatedAt:new Date().toISOString(),recommendedMinutes:minutes,questionTarget,minutesPerQuestion:MINUTES_PER_QUESTION,questionBlockMinutes,focusTopics:focusTopics.slice(0,3),rationale:rationale.slice(0,320),generatedByAi};
 }
 
 export async function POST(request:NextRequest){

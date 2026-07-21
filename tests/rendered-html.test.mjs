@@ -24,8 +24,8 @@ test("incorpora as regras oficiais do Edital 03 de 2026", async () => {
 test("calcula evolução e carga adaptativa com dados reais", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
   const logic = await readFile(new URL("../app/logic.ts", import.meta.url), "utf8");
-  assert.match(app, /weeklyEvolution\(p\.attemptHistory\)/);
-  assert.match(app, /adaptiveLoad\(p\.attemptHistory/);
+  assert.match(app, /weeklyEvolution\(\s*p\.attemptHistory\s*\)/);
+  assert.match(app, /adaptiveLoad\(\s*p\.attemptHistory/);
   assert.match(app, /Calculado somente com suas respostas/);
   assert.doesNotMatch(app, /\[8,12,6,15,10,18,9\]/);
   assert.doesNotMatch(app, /\[\["Programação",76\]/);
@@ -37,8 +37,8 @@ test("não repete acertos e registra estudo ao responder", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
   const route = await readFile(new URL("../app/api/questions/route.ts", import.meta.url), "utf8");
   assert.match(app, /successfulIds\.has\(q\.id\)/);
-  assert.match(app, /some\(a=>a\.questionId===q\.id&&a\.isCorrect\)/);
-  assert.match(app, /studyHistory:\[\.\.\.v\.studyHistory/);
+  assert.match(app, /some\(\s*\(a\)\s*=>\s*a\.questionId\s*===\s*q\.id\s*&&\s*a\.isCorrect\s*\)/);
+  assert.match(app, /studyHistory:\s*\[\s*\.\.\.\s*v\.studyHistory/);
   assert.match(app, /Zerar todas as estatísticas/);
   assert.match(route, /return pool\.slice\(0, 2\)/);
 });
@@ -127,16 +127,16 @@ test("organiza a correção da questão em etapas didáticas", async () => {
 
 test("fecha o painel de IA antes de avançar para a próxima questão", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
-  assert.match(app, /const next=async\(\)=>\{setAiOpen\(false\);/);
+  assert.match(app, /const next\s*=\s*async\s*\(\)\s*=>\s*\{\s*setAiOpen\(false\);/);
 });
 
 test("reapresenta no dia seguinte as questões erradas", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
   const logic = await readFile(new URL("../app/logic.ts", import.meta.url), "utf8");
-  assert.match(app, /dueReviewIds=new Set/);
-  assert.match(app, /new Date\(e\.nextReview\)<=new Date\(\)/);
-  assert.match(app, /!attemptedIds\.has\(q\.id\)\|\|dueReviewIds\.has\(q\.id\)/);
-  assert.match(app, /resolved:true/);
+  assert.match(app, /dueReviewIds\s*=\s*new Set/);
+  assert.match(app, /new Date\(e\.nextReview\)\s*<=\s*new Date\(\)/);
+  assert.match(app, /!attemptedIds\.has\(q\.id\)\s*\|\|\s*dueReviewIds\.has\(q\.id\)/);
+  assert.match(app, /resolved:\s*true/);
   assert.match(logic, /rating === "Errei"\)date\.setHours\(0,0,0,0\)/);
 });
 
@@ -165,6 +165,9 @@ test("gera e persiste uma meta adaptativa diária no ritmo oficial da prova", as
   assert.match(storage, /dailyPlans:\{\.\.\.remote\.dailyPlans,\.\.\.device\.dailyPlans\}/);
   assert.match(route, /gpt-5\.6-terra/);
   assert.match(route, /questionBlockMinutes/);
+  assert.match(app, /Atualizado em/);
+  assert.match(app, /fmtDateTime\(adaptive\.generatedAt\)/);
+  assert.match(route, /generatedAt:new Date\(\)\.toISOString\(\)/);
 });
 
 test("substitui flashcards por revisão livre das questões já feitas", async () => {

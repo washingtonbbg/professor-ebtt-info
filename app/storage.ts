@@ -4,7 +4,7 @@ import type { Question } from "./data";
 export type Attempt = { questionId:number; topic:string; chosen:number; correct:number; isCorrect:boolean; answeredAt:string };
 export type StudyRecord = { id:string; date:string; minutes:number };
 export type AIMessage = { id:string; role:"user"|"assistant"; content:string; createdAt:string; assistant:string };
-export type DailyPlan = { date:string; recommendedMinutes:number; questionTarget:number; minutesPerQuestion:number; questionBlockMinutes:number; focusTopics:string[]; rationale:string; generatedByAi:boolean };
+export type DailyPlan = { date:string; generatedAt:string; recommendedMinutes:number; questionTarget:number; minutesPerQuestion:number; questionBlockMinutes:number; focusTopics:string[]; rationale:string; generatedByAi:boolean };
 export type QuestionReview = { id:string; questionId:number; chosen:number; correct:number; isCorrect:boolean; reviewedAt:string };
 export type Progress = {
   answered:number; correct:number; studyMinutes:number; streak:number; favorites:number[];
