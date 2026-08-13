@@ -22,6 +22,13 @@ const schema = {
   },
 };
 
+function internallyConsistent(reviewed:{question?:Omit<Question,"id">}){
+  const q=reviewed.question;
+  if(!q||q.answer<0||q.answer>4||q.wrong.length!==5)return false;
+  const saysCorrect=(text:string)=>/\b(correta|correto|alternativa correta)\b/i.test(text)&&!/\b(incorreta|incorreto|n\u00e3o (?:\u00e9|est\u00e1) correta)\b/i.test(text);
+  return q.wrong.every((text,index)=>index===q.answer?saysCorrect(text):!saysCorrect(text));
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null) as { question?: Question } | null;
   const question = body?.question;
@@ -35,9 +42,11 @@ export async function POST(request: NextRequest) {
     `No prompt revisado, todo código ou pseudocódigo deve ficar em bloco Markdown com três crases, uma instrução por linha, linhas em branco entre blocos lógicos e indentação de quatro espaços por nível. ` +
     `sourceNote deve informar que a questão foi revisada por IA e exige validação humana em temas jurídicos ou normativos.\n${JSON.stringify(question)}`;
   try {
+    let lastError="";
+    for(let attempt=0;attempt<2;attempt++){
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "gpt-5.4-mini", input: prompt, max_output_tokens: 2200, reasoning: { effort: "low" }, text: { format: { type: "json_schema", name: "question_review", strict: true, schema } } }),
+      body: JSON.stringify({ model: "gpt-5.4-mini", input: prompt+(lastError?`\nA tentativa anterior foi rejeitada: ${lastError}. Refa\u00e7a os c\u00e1lculos e alinhe obrigatoriamente answer, explanation e wrong.`:""), max_output_tokens: 2200, reasoning: { effort: "medium" }, text: { format: { type: "json_schema", name: "question_review", strict: true, schema } } }),
     });
     if (!response.ok) {
       const failure = await response.json().catch(() => ({})) as { error?: { code?: string; type?: string } };
@@ -46,7 +55,10 @@ export async function POST(request: NextRequest) {
     const result = await response.json() as { output?: { content?: { type?: string; text?: string }[] }[] };
     const outputText = result.output?.flatMap((item) => item.content ?? []).find((content) => content.type === "output_text")?.text;
     const reviewed = JSON.parse(outputText ?? "{}") as { changed?: boolean; summary?: string; issues?: string[]; question?: Omit<Question, "id"> };
-    if (!reviewed.question) throw new Error("empty_review");
+    if (!reviewed.question) {lastError="resposta vazia";continue}
+    if(!internallyConsistent(reviewed)){lastError="o gabarito contradiz as explica\u00e7\u00f5es das alternativas";continue}
     return NextResponse.json({ ...reviewed, question: { ...reviewed.question, id: question.id } });
+    }
+    throw new Error(lastError||"inconsistent_review");
   } catch { return NextResponse.json({ error: "review_failed" }, { status: 502 }); }
 }

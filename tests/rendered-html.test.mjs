@@ -67,6 +67,8 @@ test("revisa e persiste correções de questões pela API", async () => {
   assert.doesNotMatch(app, /setAnsweredQuestion\(reviewed\);\s*setChosen\(null\)/);
   assert.match(route, /exatamente uma alternativa correta/);
   assert.match(route, /question_review/);
+  assert.match(route, /internallyConsistent/);
+  assert.match(route, /attempt<2/);
   assert.match(storage, /mergeQuestions/);
   assert.match(storage, /revisada por IA/);
 });
@@ -171,6 +173,16 @@ test("gera e persiste uma meta adaptativa diária no ritmo oficial da prova", as
   assert.match(app, /Atualizado em/);
   assert.match(app, /fmtDateTime\(adaptive\.generatedAt\)/);
   assert.match(route, /generatedAt:new Date\(\)\.toISOString\(\)/);
+});
+
+test("corrige o gabarito legado do la\u00e7o e valida novas quest\u00f5es", async () => {
+  const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
+  const generation = await readFile(new URL("../app/api/questions/route.ts", import.meta.url), "utf8");
+  assert.match(storage, /LOOP_QUESTION_SIGNATURE/);
+  assert.match(storage, /answer:3/);
+  assert.match(storage, /correct:3,isCorrect:a\.chosen===3/);
+  assert.match(generation, /verification\.correctOption/);
+  assert.match(generation, /q\.verification\?\.correctOption===q\.answer/);
 });
 
 test("substitui flashcards por revisão livre das questões já feitas", async () => {
