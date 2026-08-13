@@ -51,6 +51,7 @@ import {
   save,
   type AIMessage,
   type DailyPlan,
+  type Remediation,
 } from "./storage";
 type Page =
   | "Painel"
@@ -851,6 +852,7 @@ function QuestionBank({ p, update, notify }: any) {
     [filter, setFilter] = useState("Todas"),
     [loading, setLoading] = useState(false),
     [reviewing, setReviewing] = useState(false),
+    [remediating, setRemediating] = useState(false),
     [aiOpen, setAiOpen] = useState(false),
     [answeredQuestion, setAnsweredQuestion] = useState<Question | null>(null),
     [startedAt, setStartedAt] = useState(() => Date.now());
@@ -1000,6 +1002,17 @@ function QuestionBank({ p, update, notify }: any) {
       setReviewing(false);
     }
   };
+  const remediate = async (question:Question,selected:number) => {
+    if(remediating||p.remediations[String(question.id)])return;
+    setRemediating(true);
+    try{
+      const response=await fetch("/api/questions/remediate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question,chosen:selected})}),data=await response.json();
+      if(!response.ok||!data.easierQuestion)throw new Error("remediation_failed");
+      const remediation:Remediation={...data,sourceQuestionId:question.id,createdAt:new Date().toISOString()};
+      update((v:Progress)=>({...v,remediations:{...v.remediations,[String(question.id)]:remediation},generatedQuestions:[...v.generatedQuestions.filter(x=>x.id!==remediation.easierQuestion.id),remediation.easierQuestion].slice(-80)}));
+      notify("Trilha de reforço criada para este erro");
+    }catch{notify("O reforço pedagógico será tentado novamente depois")}finally{setRemediating(false)}
+  };
   const answer = () => {
     if (chosen === null) return;
     setChecked(true);
@@ -1073,6 +1086,7 @@ function QuestionBank({ p, update, notify }: any) {
         errors,
       };
     });
+    if(!ok)void remediate(q,chosen);
   };
   const next = async () => {
     setAiOpen(false);
@@ -1148,6 +1162,9 @@ function QuestionBank({ p, update, notify }: any) {
           {checked && chosen !== null && (
             <QuestionFeedback q={q} chosen={chosen} />
           )}{" "}
+          {checked && chosen!==null && chosen!==q.answer && (
+            <RemediationPanel remediation={p.remediations[String(q.id)]} loading={remediating}/>
+          )}
           {checked && (
             <div className="ai-explain">
               <button
@@ -1185,6 +1202,16 @@ function QuestionBank({ p, update, notify }: any) {
       </div>
     </>
   );
+}
+function RemediationPanel({remediation,loading}:{remediation?:Remediation;loading:boolean}){
+  if(loading)return <section className="remediation loading"><Brain/><div><strong>Preparando reforço personalizado…</strong><p>A IA está simplificando o conceito e criando uma questão de pré-requisito.</p></div></section>;
+  if(!remediation)return null;
+  return <section className="remediation">
+    <header><Brain/><div><small>TRILHA ADAPTATIVA</small><strong>{remediation.concept}</strong></div></header>
+    <div className="learning-grid"><article><small>EXPLICAÇÃO SIMPLES</small><p>{remediation.simpleExplanation}</p></article><article><small>EXEMPLO RESOLVIDO</small><p>{remediation.workedExample}</p></article><article className="memory"><small>MEMORIZE</small><p>{remediation.mnemonic}</p></article></div>
+    <div className="mind-map"><strong>{remediation.mapTitle}</strong><div>{remediation.mapNodes.map((node,i)=><span key={i}>{node}</span>)}</div></div>
+    <div className="easier-next"><small>PRÓXIMO PASSO</small><p>Uma questão mais fácil sobre esse pré-requisito foi adicionada ao seu banco.</p></div>
+  </section>
 }
 function AIPanel({
   q,
@@ -1731,15 +1758,22 @@ function Errors({ p, update }: any) {
   );
 }
 function Syllabus({ p, update }: any) {
+  const [query,setQuery]=useState(""),areas=[...new Set(topics.map(t=>t.area))],normalized=query.trim().toLocaleLowerCase("pt-BR"),visible=topics.filter(t=>!normalized||`${t.area} ${t.name}`.toLocaleLowerCase("pt-BR").includes(normalized)),mastered=topics.filter(t=>p.topicStatus[t.id]==="dominado").length;
   return (
     <div className="syllabus">
+      <Card className="index-head">
+        <div><small>ÍNDICE DO CONTEÚDO PROGRAMÁTICO</small><h2>{topics.length} tópicos em {areas.length} áreas</h2><p>Localize assuntos e acompanhe seu domínio em relação ao programa da prova.</p></div>
+        <div className="index-progress"><strong>{mastered}/{topics.length}</strong><span>dominados</span><progress value={mastered} max={topics.length}/></div>
+        <input aria-label="Buscar no conteúdo programático" placeholder="Buscar assunto ou área…" value={query} onChange={e=>setQuery(e.target.value)}/>
+      </Card>
+      <nav className="area-index" aria-label="Áreas do conteúdo">{areas.map((area,i)=><a key={area} href={`#area-${i+1}`}>{i+1}. {area}<span>{topics.filter(t=>t.area===area).length}</span></a>)}</nav>
       {[...new Set(topics.map((t) => t.area))].map((g) => (
-        <Card key={g}>
+        visible.some(t=>t.area===g)&&<Card key={g} id={`area-${areas.indexOf(g)+1}`}>
           <Title
             t={g}
             s={`${topics.filter((t) => t.area === g).length} tópicos`}
           />
-          {topics
+          {visible
             .filter((t) => t.area === g)
             .map((t) => (
               <div className="topic" key={t.id}>

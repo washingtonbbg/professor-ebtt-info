@@ -195,3 +195,17 @@ test("substitui flashcards por revisão livre das questões já feitas", async (
   assert.match(storage, /questionReviews:QuestionReview\[\]/);
   assert.match(storage, /questionReviews=union/);
 });
+
+test("oferece índice programático e reforço adaptativo após erro", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
+  const route = await readFile(new URL("../app/api/questions/remediate/route.ts", import.meta.url), "utf8");
+  assert.match(app, /ÍNDICE DO CONTEÚDO PROGRAMÁTICO/);
+  assert.match(app, /Buscar no conteúdo programático/);
+  assert.match(app, /\/api\/questions\/remediate/);
+  assert.match(app, /TRILHA ADAPTATIVA/);
+  assert.match(app, /mapNodes/);
+  assert.match(storage, /remediations:Record<string,Remediation>/);
+  assert.match(route, /questão realmente mais fácil/);
+  assert.match(route, /adaptive_remediation/);
+});

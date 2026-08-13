@@ -119,3 +119,23 @@
 
 .review-questions { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 900px) { .review-questions { grid-template-columns: 1fr; } }
+
+.remediation { margin-top: 16px; overflow: hidden; border: 1px solid #a9c2f3; border-radius: 14px; background: #f7f9ff; }
+.remediation > header { display: flex; align-items: center; gap: 11px; padding: 14px 16px; background: #e8efff; color: #173e93; }
+.remediation > header svg { flex: none; }
+.remediation > header div { display: grid; gap: 2px; }
+.remediation > header small,.learning-grid small,.easier-next small { font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.learning-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 14px; }
+.learning-grid article { padding: 12px; border: 1px solid #dbe3f1; border-radius: 9px; background: #fff; }
+.learning-grid article.memory { grid-column: 1/-1; border-color: #f0d18d; background: #fff8e7; }
+.learning-grid p,.easier-next p { margin: 6px 0 0; color: #465166; font-size: 12px; line-height: 1.5; }
+.mind-map { padding: 0 14px 14px; text-align: center; }
+.mind-map > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+.mind-map span { position: relative; padding: 8px 10px; border: 1px solid #9bb4ed; border-radius: 18px; background: #fff; color: #1748ad; font-size: 11px; }
+.easier-next { margin: 0 14px 14px; padding: 11px 12px; border-radius: 9px; background: #eaf8f0; color: #14643d; }
+.remediation.loading { display: flex; align-items: center; gap: 12px; padding: 15px; }
+.index-head { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; }
+.index-head h2 { margin: 5px 0; }.index-head > input { grid-column: 1/-1; width: 100%; border: 1px solid #cad2df; border-radius: 9px; padding: 11px; }
+.index-progress { display: grid; min-width: 130px; text-align: right; }.index-progress strong { font-size: 22px; }.index-progress span { color: #667085; font-size: 11px; }.index-progress progress { width: 100%; margin-top: 6px; }
+.area-index { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }.area-index a { display: flex; justify-content: space-between; gap: 8px; border: 1px solid #dce3ed; border-radius: 9px; background: #fff; color: #244681; padding: 10px; text-decoration: none; font-size: 12px; }.area-index span { font-weight: 800; }
+@media (max-width:767px){.learning-grid,.area-index{grid-template-columns:1fr}.index-head{grid-template-columns:1fr}.index-progress{text-align:left}.topic{grid-template-columns:1fr!important;gap:8px!important}}
