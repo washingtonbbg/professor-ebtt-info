@@ -62,6 +62,9 @@ test("revisa e persiste correções de questões pela API", async () => {
   const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
   assert.match(app, /Revisar com IA/);
   assert.match(app, /\/api\/questions\/review/);
+  assert.match(app, /disabled=\{reviewing\}/);
+  assert.doesNotMatch(app, /disabled=\{reviewing \|\| checked\}/);
+  assert.doesNotMatch(app, /setAnsweredQuestion\(reviewed\);\s*setChosen\(null\)/);
   assert.match(route, /exatamente uma alternativa correta/);
   assert.match(route, /question_review/);
   assert.match(storage, /mergeQuestions/);

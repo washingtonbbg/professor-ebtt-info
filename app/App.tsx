@@ -989,9 +989,6 @@ function QuestionBank({ p, update, notify }: any) {
         ].slice(-80),
       }));
       setAnsweredQuestion(reviewed);
-      setChosen(null);
-      setChecked(false);
-      setStartedAt(Date.now());
       notify(
         data.changed
           ? `Questão corrigida: ${data.summary}`
@@ -1118,7 +1115,7 @@ function QuestionBank({ p, update, notify }: any) {
             <span>{q.topic}</span>
             <span>{q.difficulty}</span>
             <button
-              disabled={reviewing || checked}
+              disabled={reviewing}
               aria-label="Revisar questão com IA"
               onClick={reviewQuestion}
             >
