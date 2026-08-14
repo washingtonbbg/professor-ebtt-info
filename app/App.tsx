@@ -433,17 +433,29 @@ function QuestionMaterials({ q }: { q: Question }) {
   );
 }
 const sqlStudents=[{id:1,nome:"Ana",curso:"Informática",nota:8.5},{id:2,nome:"Bruno",curso:"Informática",nota:6.0},{id:3,nome:"Carla",curso:"Edificações",nota:9.0},{id:4,nome:"Diego",curso:"Informática",nota:7.5},{id:5,nome:"Eva",curso:"Edificações",nota:5.5}];
-function AlgorithmLab(){
-  const [n,setN]=useState(5),[step,setStep]=useState(0),[complexity,setComplexity]=useState(""),[checked,setChecked]=useState(false);
-  const trace=Array.from({length:n},(_,index)=>index+1).map((i,index,rows)=>{const before=rows.slice(0,index).reduce((sum,j)=>j%2===0?sum+j:sum-1,0),after=i%2===0?before+i:before-1;return{i,condition:i%2===0?"verdadeira":"falsa",operation:i%2===0?`S ← ${before} + ${i}`:`S ← ${before} - 1`,S:after}}),visible=trace.slice(0,step),current=trace[Math.min(step,trace.length)-1];
+function algorithmLabKind(q:Question):"binary"|"parity"|null{
+  const text=`${q.prompt} ${q.explanation}`.toLocaleLowerCase("pt-BR");
+  if(/busca bin[aá]ria/.test(text))return "binary";
+  if(/mod\s*2|m[oó]dulo\s*2/.test(text)&&/para\s+i|la[cç]o/.test(text))return "parity";
+  return null;
+}
+function AlgorithmLab({q}:{q:Question}){
+  const kind=algorithmLabKind(q),[n,setN]=useState(kind==="binary"?1024:5),[step,setStep]=useState(0),[complexity,setComplexity]=useState(""),[checked,setChecked]=useState(false);
+  if(!kind)return null;
+  const parityTrace=Array.from({length:n},(_,index)=>index+1).map((i,index,rows)=>{const before=rows.slice(0,index).reduce((sum,j)=>j%2===0?sum+j:sum-1,0),after=i%2===0?before+i:before-1;return{i,condition:i%2===0?"verdadeira":"falsa",operation:i%2===0?`S ← ${before} + ${i}`:`S ← ${before} - 1`,S:after}});
+  const binaryTrace=[] as {low:number;high:number;middle:number;result:string}[];
+  if(kind==="binary"){let low=1,high=n;while(low<=high){const middle=Math.floor((low+high)/2);binaryTrace.push({low,high,middle,result:"valor procurado é maior"});low=middle+1}binaryTrace.push({low,high,middle:0,result:"intervalo vazio: não encontrado"})}
+  const total=kind==="binary"?binaryTrace.length:parityTrace.length,visibleParity=parityTrace.slice(0,step),visibleBinary=binaryTrace.slice(0,step),current=parityTrace[Math.min(step,parityTrace.length)-1];
   const reset=(value=n)=>{setN(value);setStep(0);setComplexity("");setChecked(false)};
+  const expectedComplexity=kind==="binary"?"O(log N)":"O(N)";
   return <details className="algorithm-lab" open>
-    <summary><Brain size={18}/><span><b>Laboratório de Algoritmos</b><small>Execute o pseudocódigo passo a passo</small></span></summary>
-    <div className="algorithm-body"><label>Entrada N: <b>{n}</b><input type="range" min="1" max="10" value={n} onChange={e=>reset(+e.target.value)}/></label>
-      <div className="algorithm-workspace"><pre><code>{`leia N\nS ← 0\npara i de 1 até N faça\n    se i mod 2 = 0 então\n        S ← S + i\n    senão\n        S ← S - 1\n    fimse\nfimpara\nescreva S`}</code></pre><div className="variable-watch"><small>MEMÓRIA</small><span>N <b>{n}</b></span><span>i <b>{current?.i??"—"}</b></span><span>S <b>{current?.S??0}</b></span><span>condição <b>{current?.condition??"—"}</b></span></div></div>
-      <div className="algorithm-controls"><button onClick={()=>setStep(Math.max(0,step-1))} disabled={step===0}>← Voltar</button><button className="run-step" onClick={()=>setStep(Math.min(trace.length,step+1))} disabled={step===trace.length}>{step===0?"Iniciar execução":"Próximo passo →"}</button><button onClick={()=>setStep(trace.length)}>Executar tudo</button><button onClick={()=>reset()}>Reiniciar</button></div>
-      {visible.length>0&&<div className="trace-table"><table><thead><tr><th>passo</th><th>i</th><th>i é par?</th><th>operação</th><th>S</th></tr></thead><tbody>{visible.map((row,index)=><tr key={row.i} className={index===visible.length-1?"current":""}><td>{index+1}</td><td>{row.i}</td><td>{row.condition}</td><td>{row.operation}</td><td>{row.S}</td></tr>)}</tbody></table>{step===trace.length&&<p>Saída final: <b>{trace.at(-1)?.S}</b>. O laço realizou exatamente <b>{n}</b> iterações.</p>}</div>}
-      <div className="complexity-challenge"><b>Qual é a complexidade temporal?</b><div>{["O(1)","O(log N)","O(N)","O(N²)"].map(option=><button key={option} className={complexity===option?"selected":""} onClick={()=>{setComplexity(option);setChecked(false)}}>{option}</button>)}</div><button className="check-complexity" disabled={!complexity} onClick={()=>setChecked(true)}>Verificar</button>{checked&&<p className={complexity==="O(N)"?"correct":"incorrect"}>{complexity==="O(N)"?"Correto. Cada valor de 1 até N é processado uma vez e o corpo realiza trabalho constante.":"Observe a tabela: quando N cresce, a quantidade de linhas executadas cresce na mesma proporção. Tente O(N)."}</p>}</div>
+    <summary><Brain size={18}/><span><b>Laboratório de Algoritmos</b><small>{kind==="binary"?"Simule a busca binária descrita na questão":"Execute o pseudocódigo da questão passo a passo"}</small></span></summary>
+    <div className="algorithm-body"><label>{kind==="binary"?"Tamanho do vetor":"Entrada N"}: <b>{n}</b><input type="range" min={kind==="binary"?3:1} max={kind==="binary"?10:10} value={kind==="binary"?Math.log2(n):n} onChange={e=>reset(kind==="binary"?2**(+e.target.value):+e.target.value)}/></label>
+      {kind==="binary"?<div className="algorithm-workspace"><pre><code>{`início ← 1\nfim ← ${n}\nenquanto início ≤ fim faça\n    meio ← ⌊(início + fim) / 2⌋\n    compare vetor[meio] com o valor\n    descarte metade do intervalo\nfimenquanto\nretorne “não encontrado”`}</code></pre><div className="variable-watch"><small>QUESTÃO ATUAL</small><span>elementos <b>{n}</b></span><span>pior caso <b>{binaryTrace.length-1} comparações</b></span><span>intervalo <b>reduz pela metade</b></span></div></div>:<div className="algorithm-workspace"><pre><code>{`leia N\nS ← 0\npara i de 1 até N faça\n    se i mod 2 = 0 então\n        S ← S + i\n    senão\n        S ← S - 1\n    fimse\nfimpara\nescreva S`}</code></pre><div className="variable-watch"><small>MEMÓRIA</small><span>N <b>{n}</b></span><span>i <b>{current?.i??"—"}</b></span><span>S <b>{current?.S??0}</b></span><span>condição <b>{current?.condition??"—"}</b></span></div></div>}
+      <div className="algorithm-controls"><button onClick={()=>setStep(Math.max(0,step-1))} disabled={step===0}>← Voltar</button><button className="run-step" onClick={()=>setStep(Math.min(total,step+1))} disabled={step===total}>{step===0?"Iniciar execução":"Próximo passo →"}</button><button onClick={()=>setStep(total)}>Executar tudo</button><button onClick={()=>reset()}>Reiniciar</button></div>
+      {kind==="binary"&&visibleBinary.length>0&&<div className="trace-table"><table><thead><tr><th>comparação</th><th>início</th><th>fim</th><th>meio</th><th>resultado</th></tr></thead><tbody>{visibleBinary.map((row,index)=><tr key={index} className={index===visibleBinary.length-1?"current":""}><td>{row.middle?index+1:"—"}</td><td>{row.low}</td><td>{row.high}</td><td>{row.middle||"—"}</td><td>{row.result}</td></tr>)}</tbody></table>{step===total&&<p>Depois de <b>{binaryTrace.length-1} comparações</b> com elementos, o intervalo fica vazio e a busca conclui que o valor não está no vetor.</p>}</div>}
+      {kind==="parity"&&visibleParity.length>0&&<div className="trace-table"><table><thead><tr><th>passo</th><th>i</th><th>i é par?</th><th>operação</th><th>S</th></tr></thead><tbody>{visibleParity.map((row,index)=><tr key={row.i} className={index===visibleParity.length-1?"current":""}><td>{index+1}</td><td>{row.i}</td><td>{row.condition}</td><td>{row.operation}</td><td>{row.S}</td></tr>)}</tbody></table>{step===total&&<p>Saída final: <b>{parityTrace.at(-1)?.S}</b>. O laço realizou exatamente <b>{n}</b> iterações.</p>}</div>}
+      <div className="complexity-challenge"><b>Qual é a complexidade temporal?</b><div>{["O(1)","O(log N)","O(N)","O(N²)"].map(option=><button key={option} className={complexity===option?"selected":""} onClick={()=>{setComplexity(option);setChecked(false)}}>{option}</button>)}</div><button className="check-complexity" disabled={!complexity} onClick={()=>setChecked(true)}>Verificar</button>{checked&&<p className={complexity===expectedComplexity?"correct":"incorrect"}>{complexity===expectedComplexity?(kind==="binary"?"Correto. Cada comparação elimina metade do intervalo, portanto o crescimento é logarítmico.":"Correto. Cada valor de 1 até N é processado uma vez e o corpo realiza trabalho constante."):(kind==="binary"?"A cada comparação, metade dos elementos deixa de ser candidata. Tente O(log N).":"A quantidade de iterações cresce na mesma proporção de N. Tente O(N).")}</p>}</div>
     </div>
   </details>
 }
@@ -1252,7 +1264,7 @@ function QuestionBank({ p, update, notify }: any) {
           <QuestionPrompt text={q.prompt} />
           <QuestionMaterials q={q} />
           {q.area === "Banco de Dados" && <DatabaseLab key={q.id} topic={q.topic} />}
-          {q.area === "Programação" && /Algoritmos|Lógica/i.test(q.topic) && <AlgorithmLab key={q.id} />}
+          {q.area === "Programação" && /Algoritmos|Lógica/i.test(q.topic) && <AlgorithmLab key={q.id} q={q} />}
           <Options
             q={q}
             chosen={chosen}

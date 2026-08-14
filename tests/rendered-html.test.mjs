@@ -252,6 +252,10 @@ test("oferece laboratório passo a passo em algoritmos e lógica", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
   const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
   assert.match(app, /function AlgorithmLab/);
+  assert.match(app, /function algorithmLabKind/);
+  assert.match(app, /busca bin/);
+  assert.match(app, /if\(!kind\)return null/);
+  assert.match(app, /<AlgorithmLab key=\{q\.id\} q=\{q\}/);
   assert.match(app, /Laboratório de Algoritmos/);
   assert.match(app, /Próximo passo/);
   assert.match(app, /variable-watch/);
