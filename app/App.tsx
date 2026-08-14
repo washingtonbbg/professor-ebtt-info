@@ -35,6 +35,7 @@ import {
 } from "recharts";
 import "./question-code.css";
 import { exam, questions, topics, type Question } from "./data";
+import { materialsForQuestion } from "./study-materials";
 import {
   adaptiveLoad,
   createSchedule,
@@ -406,7 +407,45 @@ function MarkdownText({ text }: { text: string }) {
     </div>
   );
 }
-function QuestionFeedback({ q, chosen }: { q: Question; chosen: number }) {
+function QuestionMaterials({ q }: { q: Question }) {
+  const materials = materialsForQuestion(q);
+  if (!materials.length) return null;
+  return (
+    <aside className="question-materials" aria-label="Materiais complementares">
+      <div>
+        <b>Material complementar</b>
+        <small>Abra os slides para revisar o conteúdo desta questão.</small>
+      </div>
+      <div className="question-material-list">
+        {materials.map((material) => (
+          <a key={material.id} href={material.href} target="_blank" rel="noreferrer">
+            <span aria-hidden="true">PPT</span>
+            <div>
+              <strong>{material.title}</strong>
+              <small>{material.description}</small>
+              <em>{material.slides} slides · arquivo PowerPoint</em>
+            </div>
+          </a>
+        ))}
+      </div>
+    </aside>
+  );
+}
+function QuestionFeedback({
+  q,
+  chosen,
+  reviewing = false,
+  reviewConcern,
+  onReviewConcern,
+  onReview,
+}: {
+  q: Question;
+  chosen: number;
+  reviewing?: boolean;
+  reviewConcern?: string;
+  onReviewConcern?: (value: string) => void;
+  onReview?: () => void;
+}) {
   const ok = chosen === q.answer,
     parts = q.explanation.split(/(?<=[.!?])\s+/).filter(Boolean),
     labels = ["Conceito-chave", "Como resolver", "Armadilha da questão"];
@@ -462,6 +501,23 @@ function QuestionFeedback({ q, chosen }: { q: Question; chosen: number }) {
           ))}
         </div>
       </details>
+      {onReview && onReviewConcern && (
+        <div className="answer-review-ai">
+          <label htmlFor={`review-concern-${q.id}`}>
+            Gabarito ou explicação contraditórios?
+          </label>
+          <textarea
+            id={`review-concern-${q.id}`}
+            value={reviewConcern}
+            maxLength={600}
+            placeholder="Ex.: marquei B, mas a justificativa fala apenas do item III."
+            onChange={(event) => onReviewConcern(event.target.value)}
+          />
+          <button disabled={reviewing} onClick={onReview}>
+            {reviewing ? "Revisando gabarito…" : "Revisar gabarito com IA"}
+          </button>
+        </div>
+      )}
       <footer>
         {q.sourceNote ||
           "Questão autoral alinhada ao conteúdo e ao estilo histórico da banca."}
@@ -852,6 +908,7 @@ function QuestionBank({ p, update, notify }: any) {
     [filter, setFilter] = useState("Todas"),
     [loading, setLoading] = useState(false),
     [reviewing, setReviewing] = useState(false),
+    [reviewConcern, setReviewConcern] = useState(""),
     [remediating, setRemediating] = useState(false),
     [aiOpen, setAiOpen] = useState(false),
     [answeredQuestion, setAnsweredQuestion] = useState<Question | null>(null),
@@ -970,14 +1027,14 @@ function QuestionBank({ p, update, notify }: any) {
       </>
     );
   const q = answeredQuestion || list[idx % list.length];
-  const reviewQuestion = async () => {
+  const reviewQuestion = async (concern = "") => {
     if (reviewing) return;
     setReviewing(true);
     try {
       const response = await fetch("/api/questions/review", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: q }),
+          body: JSON.stringify({ question: q, concern: concern.trim() }),
         }),
         data = await response.json();
       if (!response.ok || !data.question)
@@ -991,6 +1048,7 @@ function QuestionBank({ p, update, notify }: any) {
         ].slice(-80),
       }));
       setAnsweredQuestion(reviewed);
+      setReviewConcern("");
       notify(
         data.changed
           ? `Questão corrigida: ${data.summary}`
@@ -1131,7 +1189,7 @@ function QuestionBank({ p, update, notify }: any) {
             <button
               disabled={reviewing}
               aria-label="Revisar questão com IA"
-              onClick={reviewQuestion}
+              onClick={() => void reviewQuestion()}
             >
               {reviewing ? "Revisando…" : "Revisar com IA"}
             </button>
@@ -1153,6 +1211,7 @@ function QuestionBank({ p, update, notify }: any) {
             </button>
           </div>
           <QuestionPrompt text={q.prompt} />
+          <QuestionMaterials q={q} />
           <Options
             q={q}
             chosen={chosen}
@@ -1160,7 +1219,14 @@ function QuestionBank({ p, update, notify }: any) {
             checked={checked}
           />
           {checked && chosen !== null && (
-            <QuestionFeedback q={q} chosen={chosen} />
+            <QuestionFeedback
+              q={q}
+              chosen={chosen}
+              reviewing={reviewing}
+              reviewConcern={reviewConcern}
+              onReviewConcern={setReviewConcern}
+              onReview={() => void reviewQuestion(reviewConcern)}
+            />
           )}{" "}
           {checked && chosen!==null && chosen!==q.answer && (
             <RemediationPanel remediation={p.remediations[String(q.id)]} loading={remediating}/>

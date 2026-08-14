@@ -61,6 +61,8 @@ test("revisa e persiste correções de questões pela API", async () => {
   const route = await readFile(new URL("../app/api/questions/review/route.ts", import.meta.url), "utf8");
   const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
   assert.match(app, /Revisar com IA/);
+  assert.match(app, /Revisar gabarito com IA/);
+  assert.match(app, /reviewConcern/);
   assert.match(app, /\/api\/questions\/review/);
   assert.match(app, /disabled=\{reviewing\}/);
   assert.doesNotMatch(app, /disabled=\{reviewing \|\| checked\}/);
@@ -69,6 +71,8 @@ test("revisa e persiste correções de questões pela API", async () => {
   assert.match(route, /question_review/);
   assert.match(route, /internallyConsistent/);
   assert.match(route, /attempt<2/);
+  assert.match(route, /optionVerdicts/);
+  assert.match(route, /Contradi.*relatada pelo estudante/);
   assert.match(storage, /mergeQuestions/);
   assert.match(storage, /revisada por IA/);
 });
@@ -133,6 +137,18 @@ test("organiza a correção da questão em etapas didáticas", async () => {
 test("fecha o painel de IA antes de avançar para a próxima questão", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
   assert.match(app, /const next\s*=\s*async\s*\(\)\s*=>\s*\{\s*setAiOpen\(false\);/);
+});
+
+test("oferece apresentações como material complementar nas questões relacionadas", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const materials = await readFile(new URL("../app/study-materials.ts", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
+  assert.match(app, /QuestionMaterials/);
+  assert.match(app, /Material complementar/);
+  assert.match(materials, /algoritmos-e-bancos-de-dados\.pptx/);
+  assert.match(materials, /a-refinaria-da-normalizacao\.pptx/);
+  assert.match(materials, /materialsForQuestion/);
+  assert.match(css, /\.question-materials/);
 });
 
 test("reapresenta no dia seguinte as questões erradas", async () => {
