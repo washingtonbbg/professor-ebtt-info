@@ -433,6 +433,20 @@ function QuestionMaterials({ q }: { q: Question }) {
   );
 }
 const sqlStudents=[{id:1,nome:"Ana",curso:"Informática",nota:8.5},{id:2,nome:"Bruno",curso:"Informática",nota:6.0},{id:3,nome:"Carla",curso:"Edificações",nota:9.0},{id:4,nome:"Diego",curso:"Informática",nota:7.5},{id:5,nome:"Eva",curso:"Edificações",nota:5.5}];
+function AlgorithmLab(){
+  const [n,setN]=useState(5),[step,setStep]=useState(0),[complexity,setComplexity]=useState(""),[checked,setChecked]=useState(false);
+  const trace=Array.from({length:n},(_,index)=>index+1).map((i,index,rows)=>{const before=rows.slice(0,index).reduce((sum,j)=>j%2===0?sum+j:sum-1,0),after=i%2===0?before+i:before-1;return{i,condition:i%2===0?"verdadeira":"falsa",operation:i%2===0?`S ← ${before} + ${i}`:`S ← ${before} - 1`,S:after}}),visible=trace.slice(0,step),current=trace[Math.min(step,trace.length)-1];
+  const reset=(value=n)=>{setN(value);setStep(0);setComplexity("");setChecked(false)};
+  return <details className="algorithm-lab" open>
+    <summary><Brain size={18}/><span><b>Laboratório de Algoritmos</b><small>Execute o pseudocódigo passo a passo</small></span></summary>
+    <div className="algorithm-body"><label>Entrada N: <b>{n}</b><input type="range" min="1" max="10" value={n} onChange={e=>reset(+e.target.value)}/></label>
+      <div className="algorithm-workspace"><pre><code>{`leia N\nS ← 0\npara i de 1 até N faça\n    se i mod 2 = 0 então\n        S ← S + i\n    senão\n        S ← S - 1\n    fimse\nfimpara\nescreva S`}</code></pre><div className="variable-watch"><small>MEMÓRIA</small><span>N <b>{n}</b></span><span>i <b>{current?.i??"—"}</b></span><span>S <b>{current?.S??0}</b></span><span>condição <b>{current?.condition??"—"}</b></span></div></div>
+      <div className="algorithm-controls"><button onClick={()=>setStep(Math.max(0,step-1))} disabled={step===0}>← Voltar</button><button className="run-step" onClick={()=>setStep(Math.min(trace.length,step+1))} disabled={step===trace.length}>{step===0?"Iniciar execução":"Próximo passo →"}</button><button onClick={()=>setStep(trace.length)}>Executar tudo</button><button onClick={()=>reset()}>Reiniciar</button></div>
+      {visible.length>0&&<div className="trace-table"><table><thead><tr><th>passo</th><th>i</th><th>i é par?</th><th>operação</th><th>S</th></tr></thead><tbody>{visible.map((row,index)=><tr key={row.i} className={index===visible.length-1?"current":""}><td>{index+1}</td><td>{row.i}</td><td>{row.condition}</td><td>{row.operation}</td><td>{row.S}</td></tr>)}</tbody></table>{step===trace.length&&<p>Saída final: <b>{trace.at(-1)?.S}</b>. O laço realizou exatamente <b>{n}</b> iterações.</p>}</div>}
+      <div className="complexity-challenge"><b>Qual é a complexidade temporal?</b><div>{["O(1)","O(log N)","O(N)","O(N²)"].map(option=><button key={option} className={complexity===option?"selected":""} onClick={()=>{setComplexity(option);setChecked(false)}}>{option}</button>)}</div><button className="check-complexity" disabled={!complexity} onClick={()=>setChecked(true)}>Verificar</button>{checked&&<p className={complexity==="O(N)"?"correct":"incorrect"}>{complexity==="O(N)"?"Correto. Cada valor de 1 até N é processado uma vez e o corpo realiza trabalho constante.":"Observe a tabela: quando N cresce, a quantidade de linhas executadas cresce na mesma proporção. Tente O(N)."}</p>}</div>
+    </div>
+  </details>
+}
 function DatabaseLab({topic}:{topic:string}){
   const isNormalization=/normaliza|dependência/i.test(topic),[lesson,setLesson]=useState<"filter"|"group"|"normalization">(isNormalization?"normalization":"filter"),[minGrade,setMinGrade]=useState(7),[ran,setRan]=useState(false),[determinant,setDeterminant]=useState("Aluno, Disciplina"),[normalForm,setNormalForm]=useState(""),[checkedForm,setCheckedForm]=useState(false);
   const filtered=sqlStudents.filter(row=>row.nota>=minGrade),groups=[...new Set(sqlStudents.map(row=>row.curso))].map(curso=>({curso,alunos:sqlStudents.filter(row=>row.curso===curso).length,média:(sqlStudents.filter(row=>row.curso===curso).reduce((sum,row)=>sum+row.nota,0)/sqlStudents.filter(row=>row.curso===curso).length).toFixed(1)}));
@@ -1238,6 +1252,7 @@ function QuestionBank({ p, update, notify }: any) {
           <QuestionPrompt text={q.prompt} />
           <QuestionMaterials q={q} />
           {q.area === "Banco de Dados" && <DatabaseLab key={q.id} topic={q.topic} />}
+          {q.area === "Programação" && /Algoritmos|Lógica/i.test(q.topic) && <AlgorithmLab key={q.id} />}
           <Options
             q={q}
             chosen={chosen}

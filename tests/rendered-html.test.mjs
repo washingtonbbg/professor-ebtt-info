@@ -247,3 +247,17 @@ test("oferece laboratório interativo nas questões de banco de dados", async ()
   assert.match(css, /\.closure/);
   assert.match(css, /\.normal-form-challenge/);
 });
+
+test("oferece laboratório passo a passo em algoritmos e lógica", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
+  assert.match(app, /function AlgorithmLab/);
+  assert.match(app, /Laboratório de Algoritmos/);
+  assert.match(app, /Próximo passo/);
+  assert.match(app, /variable-watch/);
+  assert.match(app, /Qual é a complexidade temporal/);
+  assert.match(app, /q\.area === "Programação"/);
+  assert.match(css, /\.algorithm-lab/);
+  assert.match(css, /\.trace-table/);
+  assert.match(css, /\.complexity-challenge/);
+});
