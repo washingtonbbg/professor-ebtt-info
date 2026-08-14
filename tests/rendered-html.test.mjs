@@ -238,4 +238,12 @@ test("oferece laboratório interativo nas questões de banco de dados", async ()
   assert.match(css, /\.database-lab/);
   assert.match(css, /\.sql-editor/);
   assert.match(css, /\.relation-map/);
+  assert.match(app, /Calcule o fecho/);
+  assert.match(app, /Em qual forma normal R se encontra/);
+  assert.match(app, /Decomposição pedagógica para 3FN/);
+  assert.match(app, /Professor → Sala/);
+  assert.match(app, /normalForm==="2FN"/);
+  assert.match(css, /\.fd-lab/);
+  assert.match(css, /\.closure/);
+  assert.match(css, /\.normal-form-challenge/);
 });
