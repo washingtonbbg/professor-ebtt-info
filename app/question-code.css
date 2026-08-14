@@ -67,6 +67,15 @@
 .question-material-list > a > div { display: grid; gap: 3px; min-width: 0; }
 .question-material-list strong { color: #173f99; font-size: 12px; }
 .question-material-list em { color: #667085; font-size: 10px; font-style: normal; }
+.database-lab { margin: 14px 0 20px; overflow: hidden; border: 1px solid #9fc4b4; border-radius: 12px; background: #f5fbf8; }
+.database-lab > summary { display: flex; align-items: center; gap: 10px; padding: 13px 15px; background: #e4f4ec; color: #145c3d; cursor: pointer; list-style: none; }
+.database-lab > summary::-webkit-details-marker { display: none; }.database-lab > summary span { display: grid; gap: 2px; }.database-lab > summary small { color: #4c7564; font-size: 10px; }
+.db-tabs { display: flex; gap: 7px; padding: 13px 13px 0; overflow-x: auto; }.db-tabs button { flex: none; border: 1px solid #b8d6c9; border-radius: 18px; padding: 7px 10px; background: #fff; color: #28634b; font-size: 11px; }.db-tabs button.active { border-color: #18784e; background: #18784e; color: #fff; }
+.db-control { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 8px; padding: 13px 13px 0; color: #365748; font-size: 12px; }.db-control input { width: 100%; accent-color: #18784e; }
+.sql-editor { margin: 13px; padding: 14px; overflow-x: auto; border-radius: 9px; background: #17231e; color: #d9fbe9; white-space: pre; font: 600 12px/1.55 Consolas,"Courier New",monospace; }
+.run-query { margin: 0 13px 13px; border: 0; border-radius: 8px; padding: 9px 12px; background: #18784e; color: #fff; font-weight: 800; }
+.db-result { margin: 0 13px 13px; overflow-x: auto; border: 1px solid #c9ded5; border-radius: 9px; background: #fff; }.db-result table { width: 100%; border-collapse: collapse; font-size: 11px; }.db-result th,.db-result td { padding: 8px 10px; border-bottom: 1px solid #e2ece7; text-align: left; }.db-result th { background: #edf7f2; color: #28634b; text-transform: capitalize; }.db-result p { margin: 0; padding: 11px; color: #425c50; font-size: 11px; line-height: 1.45; }
+.relation-map { display: flex; align-items: center; justify-content: center; gap: 9px; padding: 18px; }.relation-map span { padding: 12px 16px; border: 2px solid #18784e; border-radius: 9px; color: #145c3d; font-weight: 900; }.relation-map i { color: #667b71; font-size: 11px; }
 .answer-feedback > footer { padding: 10px 16px; border-top: 1px solid #e2e7ef; background: #f8fafc; color: #667085; font-size: 10px; line-height: 1.4; }
 
 .ai-explain { display: flex; justify-content: flex-end; margin-top: 14px; }

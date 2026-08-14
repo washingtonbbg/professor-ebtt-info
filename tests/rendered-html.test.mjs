@@ -225,3 +225,17 @@ test("oferece índice programático e reforço adaptativo após erro", async () 
   assert.match(route, /questão realmente mais fácil/);
   assert.match(route, /adaptive_remediation/);
 });
+
+test("oferece laboratório interativo nas questões de banco de dados", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
+  assert.match(app, /function DatabaseLab/);
+  assert.match(app, /Laboratório de Banco de Dados/);
+  assert.match(app, /Filtro WHERE/);
+  assert.match(app, /GROUP BY/);
+  assert.match(app, /Normalização/);
+  assert.match(app, /q\.area === "Banco de Dados"/);
+  assert.match(css, /\.database-lab/);
+  assert.match(css, /\.sql-editor/);
+  assert.match(css, /\.relation-map/);
+});

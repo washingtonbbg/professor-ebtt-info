@@ -11,6 +11,7 @@ import {
   ChevronRight,
   CircleAlert,
   Clock3,
+  Database,
   Download,
   FileQuestion,
   GraduationCap,
@@ -430,6 +431,20 @@ function QuestionMaterials({ q }: { q: Question }) {
       </div>
     </aside>
   );
+}
+const sqlStudents=[{id:1,nome:"Ana",curso:"Informática",nota:8.5},{id:2,nome:"Bruno",curso:"Informática",nota:6.0},{id:3,nome:"Carla",curso:"Edificações",nota:9.0},{id:4,nome:"Diego",curso:"Informática",nota:7.5},{id:5,nome:"Eva",curso:"Edificações",nota:5.5}];
+function DatabaseLab({topic}:{topic:string}){
+  const [lesson,setLesson]=useState<"filter"|"group"|"normalization">("filter"),[minGrade,setMinGrade]=useState(7),[ran,setRan]=useState(false);
+  const filtered=sqlStudents.filter(row=>row.nota>=minGrade),groups=[...new Set(sqlStudents.map(row=>row.curso))].map(curso=>({curso,alunos:sqlStudents.filter(row=>row.curso===curso).length,média:(sqlStudents.filter(row=>row.curso===curso).reduce((sum,row)=>sum+row.nota,0)/sqlStudents.filter(row=>row.curso===curso).length).toFixed(1)}));
+  const query=lesson==="filter"?`SELECT nome, curso, nota\nFROM alunos\nWHERE nota >= ${minGrade}\nORDER BY nota DESC;`:lesson==="group"?"SELECT curso, COUNT(*) AS alunos, AVG(nota) AS média\nFROM alunos\nGROUP BY curso;":"-- Separação em duas relações elimina repetição\nALUNO(id, nome, curso_id)\nCURSO(id, nome)\n-- ALUNO.curso_id → CURSO.id";
+  return <details className="database-lab" open={/normaliza|sql|consulta|banco/i.test(topic)}>
+    <summary><Database size={18}/><span><b>Laboratório de Banco de Dados</b><small>Execute, observe e assimile o conceito</small></span></summary>
+    <div className="db-tabs" role="tablist" aria-label="Experimentos SQL"><button className={lesson==="filter"?"active":""} onClick={()=>{setLesson("filter");setRan(false)}}>Filtro WHERE</button><button className={lesson==="group"?"active":""} onClick={()=>{setLesson("group");setRan(false)}}>GROUP BY</button><button className={lesson==="normalization"?"active":""} onClick={()=>{setLesson("normalization");setRan(false)}}>Normalização</button></div>
+    {lesson==="filter"&&<label className="db-control">Nota mínima: <b>{minGrade.toFixed(1)}</b><input type="range" min="5" max="9" step="0.5" value={minGrade} onChange={e=>{setMinGrade(+e.target.value);setRan(false)}}/></label>}
+    <pre className="sql-editor"><code>{query}</code></pre>
+    <button className="run-query" onClick={()=>setRan(true)}>▶ Executar experimento</button>
+    {ran&&<div className="db-result" aria-live="polite">{lesson==="normalization"?<><div className="relation-map"><span>ALUNO</span><i>curso_id → id</i><span>CURSO</span></div><p><b>Assimile:</b> dados do curso ficam em uma única tabela. Isso evita repetir o nome do curso em cada aluno e reduz anomalias de atualização.</p></>:<><table><thead><tr>{Object.keys((lesson==="filter"?filtered:groups)[0]||{}).map(k=><th key={k}>{k}</th>)}</tr></thead><tbody>{(lesson==="filter"?filtered:groups).map((row:any,i)=><tr key={i}>{Object.values(row).map((value:any,j)=><td key={j}>{value}</td>)}</tr>)}</tbody></table><p><b>Assimile:</b> {lesson==="filter"?"WHERE seleciona linhas antes da exibição; aumentar a nota reduz o conjunto retornado.":"GROUP BY reúne linhas com o mesmo curso; as funções calculam um resultado para cada grupo."}</p></>}</div>}
+  </details>
 }
 function QuestionFeedback({
   q,
@@ -1212,6 +1227,7 @@ function QuestionBank({ p, update, notify }: any) {
           </div>
           <QuestionPrompt text={q.prompt} />
           <QuestionMaterials q={q} />
+          {q.area === "Banco de Dados" && <DatabaseLab key={q.id} topic={q.topic} />}
           <Options
             q={q}
             chosen={chosen}
