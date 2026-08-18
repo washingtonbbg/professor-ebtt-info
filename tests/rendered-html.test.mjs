@@ -139,16 +139,9 @@ test("fecha o painel de IA antes de avançar para a próxima questão", async ()
   assert.match(app, /const next\s*=\s*async\s*\(\)\s*=>\s*\{\s*setAiOpen\(false\);/);
 });
 
-test("oferece apresentações como material complementar nas questões relacionadas", async () => {
+test("não exibe material complementar nas questões", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
-  const materials = await readFile(new URL("../app/study-materials.ts", import.meta.url), "utf8");
-  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
-  assert.match(app, /QuestionMaterials/);
-  assert.match(app, /Material complementar/);
-  assert.match(materials, /algoritmos-e-bancos-de-dados\.pptx/);
-  assert.match(materials, /a-refinaria-da-normalizacao\.pptx/);
-  assert.match(materials, /materialsForQuestion/);
-  assert.match(css, /\.question-materials/);
+  assert.doesNotMatch(app, /<QuestionMaterials q=\{q\}/);
 });
 
 test("reapresenta no dia seguinte as questões erradas", async () => {
@@ -226,26 +219,9 @@ test("oferece índice programático e reforço adaptativo após erro", async () 
   assert.match(route, /adaptive_remediation/);
 });
 
-test("oferece laboratório interativo nas questões de banco de dados", async () => {
+test("não exibe laboratório nas questões de banco de dados", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
-  const css = await readFile(new URL("../app/question-code.css", import.meta.url), "utf8");
-  assert.match(app, /function DatabaseLab/);
-  assert.match(app, /Laboratório de Banco de Dados/);
-  assert.match(app, /Filtro WHERE/);
-  assert.match(app, /GROUP BY/);
-  assert.match(app, /Normalização/);
-  assert.match(app, /q\.area === "Banco de Dados"/);
-  assert.match(css, /\.database-lab/);
-  assert.match(css, /\.sql-editor/);
-  assert.match(css, /\.relation-map/);
-  assert.match(app, /Calcule o fecho/);
-  assert.match(app, /Em qual forma normal R se encontra/);
-  assert.match(app, /Decomposição pedagógica para 3FN/);
-  assert.match(app, /Professor → Sala/);
-  assert.match(app, /normalForm==="2FN"/);
-  assert.match(css, /\.fd-lab/);
-  assert.match(css, /\.closure/);
-  assert.match(css, /\.normal-form-challenge/);
+  assert.doesNotMatch(app, /<DatabaseLab key=\{q\.id\}/);
 });
 
 test("oferece laboratório passo a passo em algoritmos e lógica", async () => {

@@ -1262,8 +1262,6 @@ function QuestionBank({ p, update, notify }: any) {
             </button>
           </div>
           <QuestionPrompt text={q.prompt} />
-          <QuestionMaterials q={q} />
-          {q.area === "Banco de Dados" && <DatabaseLab key={q.id} topic={q.topic} />}
           {q.area === "Programação" && /Algoritmos|Lógica/i.test(q.topic) && <AlgorithmLab key={q.id} q={q} />}
           <Options
             q={q}
