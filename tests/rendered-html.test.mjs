@@ -234,6 +234,17 @@ test("adapta a dificuldade e só libera o próximo conceito após domínio consi
   assert.match(generation, /não antecipe outro conteúdo/);
 });
 
+test("salva e prioriza a questão mais fácil gerada pela IA", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const storage = await readFile(new URL("../app/storage.ts", import.meta.url), "utf8");
+  assert.match(app, /generatedQuestions:\s*\[\.\.\.v\.generatedQuestions\.filter\(x=>x\.id!==remediation\.easierQuestion\.id\),remediation\.easierQuestion\]/);
+  assert.match(app, /const priorityQuestion = p\.remediations\[String\(q\.id\)\]\?\.easierQuestion/);
+  assert.match(app, /setAnsweredQuestion\(priorityQuestion \|\| incoming\?\.\[0\] \|\| null\)/);
+  assert.match(app, /disabled=\{loading \|\| remediating\}/);
+  assert.match(app, /Próxima: questão mais fácil/);
+  assert.match(storage, /remediations:\{\.\.\.remote\.remediations,\.\.\.device\.remediations\}/);
+});
+
 test("não exibe laboratório nas questões de banco de dados", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(app, /<DatabaseLab key=\{q\.id\}/);

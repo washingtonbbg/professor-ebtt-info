@@ -1134,7 +1134,7 @@ function QuestionBank({ p, update, notify }: any) {
       if(!response.ok||!data.easierQuestion)throw new Error("remediation_failed");
       const remediation:Remediation={...data,sourceQuestionId:question.id,createdAt:new Date().toISOString()};
       update((v:Progress)=>({...v,remediations:{...v.remediations,[String(question.id)]:remediation},generatedQuestions:[...v.generatedQuestions.filter(x=>x.id!==remediation.easierQuestion.id),remediation.easierQuestion].slice(-80)}));
-      notify("Trilha de reforço criada para este erro");
+      notify("Questão mais fácil salva e colocada como próxima prioridade");
     }catch{notify("O reforço pedagógico será tentado novamente depois")}finally{setRemediating(false)}
   };
   const answer = () => {
@@ -1212,11 +1212,13 @@ function QuestionBank({ p, update, notify }: any) {
   };
   const next = async () => {
     setAiOpen(false);
-    const incoming = await fetchMore();
+    const priorityQuestion = p.remediations[String(q.id)]?.easierQuestion;
+    const incoming = priorityQuestion ? [] : await fetchMore();
     setIdx(idx);
     setChosen(null);
     setChecked(false);
-    setAnsweredQuestion(incoming?.[0] || null);
+    setAnsweredQuestion(priorityQuestion || incoming?.[0] || null);
+    if (priorityQuestion) notify("Abrindo primeiro a questão de reforço mais fácil");
     setStartedAt(Date.now());
   };
   const mastery = learningState(p.attemptHistory, q.topic);
@@ -1317,8 +1319,14 @@ function QuestionBank({ p, update, notify }: any) {
           )}
           <div className="actions">
             {checked ? (
-              <Button onClick={next}>
-                {loading ? "Preparando…" : "Próxima"} <ChevronRight />
+              <Button disabled={loading || remediating} onClick={next}>
+                {remediating
+                  ? "Preparando questão mais fácil…"
+                  : p.remediations[String(q.id)]?.easierQuestion
+                    ? "Próxima: questão mais fácil"
+                    : loading
+                      ? "Preparando…"
+                      : "Próxima"} <ChevronRight />
               </Button>
             ) : (
               <Button disabled={chosen === null || reviewing} onClick={answer}>
