@@ -17,6 +17,25 @@ export function createSchedule(names: string[], weekdays: number[], hours: numbe
 
 export type AttemptRecord = { topic: string; isCorrect: boolean; answeredAt: string };
 export type StudyRecord = { id: string; date: string; minutes: number };
+export type LearningStage = "iniciante" | "fundamentos" | "prática" | "consolidação";
+
+export function learningState(attempts: AttemptRecord[], topic: string) {
+  const topicAttempts = attempts.filter((attempt) => attempt.topic === topic).slice(-8);
+  const answered = topicAttempts.length;
+  const correct = topicAttempts.filter((attempt) => attempt.isCorrect).length;
+  const score = answered ? Math.round((correct / answered) * 100) : 0;
+  let streak = 0;
+  for (let index = topicAttempts.length - 1; index >= 0 && topicAttempts[index].isCorrect; index--) streak++;
+  const readyToAdvance = answered >= 4 && score >= 75 && streak >= 3;
+  const stage: LearningStage = readyToAdvance
+    ? "consolidação"
+    : answered < 2 || score < 40
+      ? "iniciante"
+      : score < 65
+        ? "fundamentos"
+        : "prática";
+  return { topic, answered, correct, score, streak, readyToAdvance, stage };
+}
 export const EXAM_MINUTES_PER_QUESTION = 240 / 50;
 const dateKey = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
 

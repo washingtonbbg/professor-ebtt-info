@@ -40,6 +40,7 @@ import { materialsForQuestion } from "./study-materials";
 import {
   adaptiveLoad,
   createSchedule,
+  learningState,
   nextReview,
   priority,
   todayStudyMinutes,
@@ -993,12 +994,24 @@ function QuestionBank({ p, update, notify }: any) {
     if (loading) return;
     setLoading(true);
     try {
+      const currentQuestion = answeredQuestion || list[idx % Math.max(1, list.length)];
+      const currentTopic = currentQuestion?.topic;
+      const learning = currentTopic ? learningState(p.attemptHistory, currentTopic) : null;
+      const areaTopics = topics.filter((item) => item.area === currentQuestion?.area);
+      const currentTopicIndex = areaTopics.findIndex((item) =>
+        item.name.toLocaleLowerCase("pt-BR").includes((currentTopic || "").toLocaleLowerCase("pt-BR")) ||
+        (currentTopic || "").toLocaleLowerCase("pt-BR").includes(item.name.toLocaleLowerCase("pt-BR")),
+      );
+      const nextTopic = learning?.readyToAdvance && areaTopics.length
+        ? areaTopics[(currentTopicIndex >= 0 ? currentTopicIndex + 1 : 0) % areaTopics.length].name
+        : currentTopic;
       const response = await fetch("/api/questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          topic: filter,
+          topic: nextTopic || filter,
           seen: p.attemptHistory.map((a: any) => a.questionId),
+          learning: learning ? { ...learning, advancedFrom: learning.readyToAdvance ? currentTopic : null } : null,
         }),
       });
       const data = await response.json();
@@ -1022,8 +1035,10 @@ function QuestionBank({ p, update, notify }: any) {
             ? "Questões de reserva carregadas"
             : "Banco concluído nesta área",
       );
+      return incoming;
     } catch {
       notify("Não foi possível carregar agora");
+      return [];
     } finally {
       setLoading(false);
     }
@@ -1051,8 +1066,8 @@ function QuestionBank({ p, update, notify }: any) {
           <Check />
           <h2>Questões disponíveis concluídas</h2>
           <p>
-            As questões acertadas não serão exibidas novamente. Você pode gerar
-            questões inéditas ou reiniciar todo o plano.
+            Gere a próxima questão adaptativa para continuar consolidando o
+            conceito ou avançar para um novo conteúdo.
           </p>
           <div className="actions">
             <Button disabled={loading} onClick={fetchMore}>
@@ -1133,8 +1148,6 @@ function QuestionBank({ p, update, notify }: any) {
         Math.min(10, Math.ceil((Date.now() - startedAt) / 60000)),
       );
     update((v: Progress) => {
-      if (v.attemptHistory.some((a) => a.questionId === q.id && a.isCorrect))
-        return v;
       const existing = v.errors.some(
           (e) => e.questionId === q.id && !e.resolved,
         ),
@@ -1199,13 +1212,14 @@ function QuestionBank({ p, update, notify }: any) {
   };
   const next = async () => {
     setAiOpen(false);
-    if (list.length <= 2) await fetchMore();
+    const incoming = await fetchMore();
     setIdx(idx);
     setChosen(null);
     setChecked(false);
-    setAnsweredQuestion(null);
+    setAnsweredQuestion(incoming?.[0] || null);
     setStartedAt(Date.now());
   };
+  const mastery = learningState(p.attemptHistory, q.topic);
   return (
     <>
       <div className="filters">
@@ -1233,6 +1247,14 @@ function QuestionBank({ p, update, notify }: any) {
       </div>
       <div className={aiOpen ? "question-with-ai open" : "question-with-ai"}>
         <Card className="question">
+          <section className="learning-path" aria-label="Progresso adaptativo no conceito">
+            <div>
+              <small>TRILHA ADAPTATIVA · {mastery.stage.toUpperCase()}</small>
+              <strong>{mastery.readyToAdvance ? "Conceito dominado — próximo tópico liberado" : `Construindo domínio em ${q.topic}`}</strong>
+              <p>{mastery.answered ? `${mastery.correct} acertos em ${mastery.answered} tentativas recentes · sequência de ${mastery.streak}` : "Começaremos pelo conceito mais básico e avançaremos no seu ritmo."}</p>
+            </div>
+            <span>{mastery.score}%</span>
+          </section>
           <div className="qmeta">
             <span>{q.area}</span>
             <span>{q.topic}</span>
@@ -1726,11 +1748,25 @@ function QuestionReviews({ p, update }: any) {
       const reviewedAt = new Date().toISOString();
       update((v: Progress) => ({
         ...v,
+        answered: v.answered + 1,
+        correct: v.correct + (chosen === q.answer ? 1 : 0),
+        attemptHistory: [
+          ...v.attemptHistory,
+          {
+            questionId: q.id,
+            topic: q.topic,
+            chosen,
+            correct: q.answer,
+            isCorrect: chosen === q.answer,
+            answeredAt: reviewedAt,
+          },
+        ].slice(-500),
         questionReviews: [
           ...v.questionReviews,
           {
             id: crypto.randomUUID(),
             questionId: q.id,
+            topic: q.topic,
             chosen,
             correct: q.answer,
             isCorrect: chosen === q.answer,

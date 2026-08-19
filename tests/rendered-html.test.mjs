@@ -33,11 +33,11 @@ test("calcula evolução e carga adaptativa com dados reais", async () => {
   assert.match(logic, /75 - accuracy/);
 });
 
-test("não repete acertos e registra estudo ao responder", async () => {
+test("não repete a mesma questão, mas considera novos acertos no domínio", async () => {
   const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
   const route = await readFile(new URL("../app/api/questions/route.ts", import.meta.url), "utf8");
   assert.match(app, /successfulIds\.has\(q\.id\)/);
-  assert.match(app, /some\(\s*\(a\)\s*=>\s*a\.questionId\s*===\s*q\.id\s*&&\s*a\.isCorrect\s*\)/);
+  assert.doesNotMatch(app, /if \(v\.attemptHistory\.some\(\(a\) => a\.questionId === q\.id && a\.isCorrect\)\)/);
   assert.match(app, /studyHistory:\s*\[\s*\.\.\.\s*v\.studyHistory/);
   assert.match(app, /Zerar todas as estatísticas/);
   assert.match(route, /return pool\.slice\(0, 2\)/);
@@ -217,6 +217,21 @@ test("oferece índice programático e reforço adaptativo após erro", async () 
   assert.match(storage, /remediations:Record<string,Remediation>/);
   assert.match(route, /questão realmente mais fácil/);
   assert.match(route, /adaptive_remediation/);
+});
+
+test("adapta a dificuldade e só libera o próximo conceito após domínio consistente", async () => {
+  const app = await readFile(new URL("../app/App.tsx", import.meta.url), "utf8");
+  const logic = await readFile(new URL("../app/logic.ts", import.meta.url), "utf8");
+  const generation = await readFile(new URL("../app/api/questions/route.ts", import.meta.url), "utf8");
+  assert.match(logic, /function learningState/);
+  assert.match(logic, /answered >= 4 && score >= 75 && streak >= 3/);
+  assert.match(app, /TRILHA ADAPTATIVA/);
+  assert.match(app, /Conceito dominado — próximo tópico liberado/);
+  assert.match(app, /learning\?\.readyToAdvance && areaTopics\.length/);
+  assert.match(app, /advancedFrom/);
+  assert.match(app, /attemptHistory:\s*\[/);
+  assert.match(generation, /Comece pelo conceito mais básico/);
+  assert.match(generation, /não antecipe outro conteúdo/);
 });
 
 test("não exibe laboratório nas questões de banco de dados", async () => {

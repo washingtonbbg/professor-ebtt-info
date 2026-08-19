@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const topic = typeof body.topic === "string" ? body.topic : "Todas";
   const seen = Array.isArray(body.seen) ? body.seen.filter(Number.isInteger).slice(-100) : [];
+  const learning = body.learning && typeof body.learning === "object" ? body.learning as { stage?: string; score?: number; answered?: number; streak?: number; readyToAdvance?: boolean; advancedFrom?: string | null } : null;
   const runtime = await import("cloudflare:workers").catch(() => null);
   const key = (runtime?.env as unknown as Record<string, string | undefined> | undefined)?.OPENAI_API_KEY ?? process.env.OPENAI_API_KEY;
   if (!key) return NextResponse.json({ questions: fallback(topic, seen), generated: false, reason: "missing_key" });
@@ -47,7 +48,18 @@ export async function POST(request: NextRequest) {
     : topics.filter((t) => t.area === topic || t.name.includes(topic)).slice(0, 10);
   const allowed = (relevantTopics.length ? relevantTopics : topics.slice(0, 10))
     .map((t) => `${t.area}: ${t.name}`).join("; ");
-  const prompt = `Crie 2 questões inéditas para o concurso de Professor EBTT Informática do IFMT. Preferência: ${topic}. ` +
+  const stage = learning?.stage || "iniciante";
+  const levelInstruction = stage === "iniciante"
+    ? "Comece pelo conceito mais básico, com linguagem simples, contexto concreto e sem exigir pré-requisitos implícitos."
+    : stage === "fundamentos"
+      ? "Trabalhe um único fundamento por vez e inclua uma aplicação direta e didática."
+      : stage === "prática"
+        ? "Aumente moderadamente a complexidade e cobre aplicação do conceito em um cenário novo."
+        : "Crie uma questão de consolidação que confirme autonomia antes da progressão para o próximo conteúdo.";
+  const prompt = `Crie 2 questões inéditas para uma trilha adaptativa do concurso de Professor EBTT Informática do IFMT. Tema atual: ${topic}. ` +
+    `Nível de aprendizagem: ${stage}; desempenho recente: ${learning?.score ?? 0}%; tentativas: ${learning?.answered ?? 0}; sequência de acertos: ${learning?.streak ?? 0}. ${levelInstruction} ` +
+    (learning?.advancedFrom ? `O estudante dominou ${learning.advancedFrom}; introduza ${topic} a partir do nível iniciante e conecte brevemente os dois conceitos. ` : "") +
+    `Se o estudante ainda não estiver pronto, permaneça no mesmo conceito e varie apenas o exemplo; não antecipe outro conteúdo. ` +
     `Escopo: ${allowed}. ` +
     `Use o estilo pedagógico da prova de 2023 (afirmações I/II/III, código ou conceitos), sem copiar. Varie dados e cenário. ` +
     `Sempre formate código ou pseudocódigo dentro de um bloco Markdown com três crases, linhas separadas e indentação de quatro espaços por nível; nunca compacte código em uma linha. ` +

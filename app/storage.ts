@@ -5,7 +5,7 @@ export type Attempt = { questionId:number; topic:string; chosen:number; correct:
 export type StudyRecord = { id:string; date:string; minutes:number };
 export type AIMessage = { id:string; role:"user"|"assistant"; content:string; createdAt:string; assistant:string };
 export type DailyPlan = { date:string; generatedAt:string; recommendedMinutes:number; questionTarget:number; minutesPerQuestion:number; questionBlockMinutes:number; focusTopics:string[]; rationale:string; generatedByAi:boolean };
-export type QuestionReview = { id:string; questionId:number; chosen:number; correct:number; isCorrect:boolean; reviewedAt:string };
+export type QuestionReview = { id:string; questionId:number; topic?:string; chosen:number; correct:number; isCorrect:boolean; reviewedAt:string };
 export type Remediation = { sourceQuestionId:number; createdAt:string; concept:string; simpleExplanation:string; workedExample:string; mnemonic:string; mapTitle:string; mapNodes:string[]; easierQuestion:Question };
 export type Progress = {
   answered:number; correct:number; studyMinutes:number; streak:number; favorites:number[];
