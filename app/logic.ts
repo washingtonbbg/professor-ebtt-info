@@ -6,11 +6,62 @@ export function priority(weight: number, frequency: number, errorRate: number, o
 }
 export function nextReview(rating: "Errei" | "Difícil" | "Bom" | "Fácil", now = new Date()) {
   const days = rating === "Errei" ? 1 : rating === "Difícil" ? 7 : rating === "Bom" ? 14 : 30;
-  const date = new Date(now); date.setDate(date.getDate() + days); return date.toISOString();
+  const date = new Date(now); date.setDate(date.getDate() + days); if(rating === "Errei")date.setHours(0,0,0,0); return date.toISOString();
 }
 export function createSchedule(names: string[], weekdays: number[], hours: number, start = new Date(), end?: Date) {
   const fallback = new Date(start); fallback.setDate(fallback.getDate() + 90); const limit = end && end > start ? end : fallback;
   const rows: { date: string; topic: string; theory: number; questions: number; review: number }[] = []; const cursor = new Date(start); let i = 0;
   while (cursor <= limit && rows.length < 120) { if (weekdays.includes(cursor.getDay())) { const mins = Math.max(30, hours * 60); rows.push({ date: cursor.toISOString(), topic: names[i++ % names.length], theory: Math.round(mins*.4), questions: Math.round(mins*.4), review: Math.round(mins*.2) }); } cursor.setDate(cursor.getDate()+1); }
   return rows;
+}
+
+export type AttemptRecord = { topic: string; isCorrect: boolean; answeredAt: string };
+export type StudyRecord = { id: string; date: string; minutes: number };
+export type LearningStage = "iniciante" | "fundamentos" | "prática" | "consolidação";
+
+export function learningState(attempts: AttemptRecord[], topic: string) {
+  const topicAttempts = attempts.filter((attempt) => attempt.topic === topic).slice(-8);
+  const answered = topicAttempts.length;
+  const correct = topicAttempts.filter((attempt) => attempt.isCorrect).length;
+  const score = answered ? Math.round((correct / answered) * 100) : 0;
+  let streak = 0;
+  for (let index = topicAttempts.length - 1; index >= 0 && topicAttempts[index].isCorrect; index--) streak++;
+  const readyToAdvance = answered >= 4 && score >= 75 && streak >= 3;
+  const stage: LearningStage = readyToAdvance
+    ? "consolidação"
+    : answered < 2 || score < 40
+      ? "iniciante"
+      : score < 65
+        ? "fundamentos"
+        : "prática";
+  return { topic, answered, correct, score, streak, readyToAdvance, stage };
+}
+export const EXAM_MINUTES_PER_QUESTION = 240 / 50;
+const dateKey = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+
+export function weeklyEvolution(attempts: AttemptRecord[], now = new Date()) {
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(now); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - (6 - index));
+    const key = dateKey(date);
+    const answered = attempts.filter((attempt) => dateKey(new Date(attempt.answeredAt)) === key).length;
+    return { d: new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(date).replace(".", ""), q: answered, date: key };
+  });
+}
+
+export function adaptiveLoad(attempts: AttemptRecord[], baseMinutes: number, examDate: string, now = new Date()) {
+  const start = new Date(now); start.setDate(start.getDate() - 7);
+  const recent = attempts.filter((attempt) => new Date(attempt.answeredAt) >= start);
+  const accuracy = recent.length ? Math.round(recent.filter((attempt) => attempt.isCorrect).length / recent.length * 100) : null;
+  const daysRemaining = Math.max(0, Math.ceil((new Date(`${examDate}T14:00:00-04:00`).getTime() - now.getTime()) / 86400000));
+  const urgency = daysRemaining <= 14 ? 1.4 : daysRemaining <= 30 ? 1.2 : 1;
+  const performanceBoost = accuracy === null ? 0.1 : Math.max(0, (75 - accuracy) / 100);
+  const recommendedMinutes = Math.min(360, Math.ceil(baseMinutes * (urgency + performanceBoost) / 15) * 15);
+  const questionBlockMinutes = Math.round(recommendedMinutes * .4);
+  const questionTarget = Math.min(50, Math.max(5, Math.floor(questionBlockMinutes / EXAM_MINUTES_PER_QUESTION)));
+  return { accuracy, daysRemaining, recommendedMinutes, questionTarget, questionBlockMinutes, minutesPerQuestion: EXAM_MINUTES_PER_QUESTION, recentQuestions: recent.length };
+}
+
+export function todayStudyMinutes(records: StudyRecord[], now = new Date()) {
+  const today = dateKey(now);
+  return records.filter((record) => dateKey(new Date(record.date)) === today).reduce((sum, record) => sum + record.minutes, 0);
 }
